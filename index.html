@@ -131,6 +131,12 @@
       letter-spacing: .02em;
     }
 
+    .settingsGroup + .settingsGroup {
+      margin-top: 16px;
+      padding-top: 14px;
+      border-top: 1px solid rgba(36, 36, 36, .08);
+    }
+
     .swatches {
       display: grid;
       grid-template-columns: repeat(3, 52px);
@@ -173,6 +179,24 @@
       box-shadow:
         inset 0 2px 4px rgba(255,255,255,.36),
         inset 0 -10px 20px rgba(0,0,0,.08);
+    }
+
+    .flagSwatch--none {
+      background: #ffffff;
+      box-shadow:
+        inset 0 0 0 1.5px rgba(36,36,36,.12),
+        inset 0 2px 4px rgba(255,255,255,.5),
+        inset 0 -8px 16px rgba(0,0,0,.05);
+    }
+
+    .flagSwatch--denmark {
+      background:
+        linear-gradient(#ffffff, #ffffff) 36% 50% / 16% 100% no-repeat,
+        linear-gradient(#ffffff, #ffffff) 50% 50% / 100% 16% no-repeat,
+        #c91726;
+      box-shadow:
+        inset 0 2px 4px rgba(255,255,255,.22),
+        inset 0 -10px 20px rgba(0,0,0,.12);
     }
 
     /* 10個目の「木目」を最終行の中央に置く */
@@ -256,6 +280,17 @@
 
     #headHit.dragging { cursor: grabbing; }
 
+    #leftFlagHit,
+    #rightFlagHit {
+      cursor: grab;
+      touch-action: none;
+    }
+
+    #leftFlagHit.dragging,
+    #rightFlagHit.dragging { cursor: grabbing; }
+
+    #toySvg:not(.has-flag) #flagRig { display: none; }
+
     .shadow {
       transform-origin: center;
       transition: opacity .1s linear;
@@ -275,9 +310,15 @@
       </svg>
     </button>
 
-    <section id="settingsPanel" class="settingsPanel" aria-label="色の設定" hidden>
-      <h2 class="settingsTitle">Color</h2>
-      <div id="swatches" class="swatches" role="list"></div>
+    <section id="settingsPanel" class="settingsPanel" aria-label="色と旗の設定" hidden>
+      <div class="settingsGroup">
+        <h2 class="settingsTitle">Color</h2>
+        <div id="swatches" class="swatches" role="list"></div>
+      </div>
+      <div class="settingsGroup">
+        <h2 class="settingsTitle">Flag</h2>
+        <div id="flagOptions" class="swatches" role="list"></div>
+      </div>
     </section>
   </div>
 
@@ -552,6 +593,40 @@
           <rect x="191" y="86" width="18" height="38" rx="7" fill="url(#plasticSoft)"/>
           <rect class="woodForm woodFormShade" x="191" y="86" width="18" height="38" rx="7" fill="url(#woodStemShade)"/>
 
+          <g id="flagRig" aria-hidden="true">
+            <g id="leftFlagRig">
+              <path id="leftFlagSpringBack" fill="none" stroke="#5e6167" stroke-width="3.8"
+                    stroke-linecap="round" stroke-linejoin="round" opacity=".15"/>
+              <path id="leftFlagSpring" fill="none" stroke="#8c9097" stroke-width="2.35"
+                    stroke-linecap="round" stroke-linejoin="round"/>
+              <g id="leftFlagTranslate">
+                <g id="leftFlagGroup">
+                  <rect x="-45" y="-54" width="84" height="54" rx="4.5" fill="#c91726"/>
+                  <rect x="-18" y="-54" width="12" height="54" fill="#ffffff"/>
+                  <rect x="-45" y="-31.5" width="84" height="12" fill="#ffffff"/>
+                  <rect id="leftFlagHit" x="-55" y="-64" width="104" height="74" rx="14"
+                        fill="transparent"/>
+                </g>
+              </g>
+            </g>
+
+            <g id="rightFlagRig">
+              <path id="rightFlagSpringBack" fill="none" stroke="#5e6167" stroke-width="3.8"
+                    stroke-linecap="round" stroke-linejoin="round" opacity=".15"/>
+              <path id="rightFlagSpring" fill="none" stroke="#8c9097" stroke-width="2.35"
+                    stroke-linecap="round" stroke-linejoin="round"/>
+              <g id="rightFlagTranslate">
+                <g id="rightFlagGroup">
+                  <rect x="-39" y="-54" width="84" height="54" rx="4.5" fill="#c91726"/>
+                  <rect x="-12" y="-54" width="12" height="54" fill="#ffffff"/>
+                  <rect x="-39" y="-31.5" width="84" height="12" fill="#ffffff"/>
+                  <rect id="rightFlagHit" x="-49" y="-64" width="104" height="74" rx="14"
+                        fill="transparent"/>
+                </g>
+              </g>
+            </g>
+          </g>
+
           <!-- dome -->
           <path d="M90 258
                    C90 168 136 104 200 104
@@ -614,6 +689,24 @@
   const settingsButton = document.getElementById('settingsButton');
   const settingsPanel = document.getElementById('settingsPanel');
   const swatches = document.getElementById('swatches');
+  const flagOptions = document.getElementById('flagOptions');
+
+  const flagEls = {
+    left: {
+      translate: document.getElementById('leftFlagTranslate'),
+      group: document.getElementById('leftFlagGroup'),
+      spring: document.getElementById('leftFlagSpring'),
+      springBack: document.getElementById('leftFlagSpringBack'),
+      hit: document.getElementById('leftFlagHit')
+    },
+    right: {
+      translate: document.getElementById('rightFlagTranslate'),
+      group: document.getElementById('rightFlagGroup'),
+      spring: document.getElementById('rightFlagSpring'),
+      springBack: document.getElementById('rightFlagSpringBack'),
+      hit: document.getElementById('rightFlagHit')
+    }
+  };
 
   const themes = {
     mizuiro: { label: '水色', toy: '#1fb3e5', hi: '#9deeff', shadow: '#0d8ab7' },
@@ -637,7 +730,14 @@
   };
   const themeEntries = Object.entries(themes);
   const STORAGE_KEY = 'hoptimist-theme';
+  const FLAG_STORAGE_KEY = 'hoptimist-flag';
   let currentTheme = null;
+  let currentFlag = 'none';
+
+  const flagChoices = {
+    none: { label: 'なし' },
+    denmark: { label: 'Denmark' }
+  };
 
   // Spring state in SVG units.
   const state = {
@@ -645,16 +745,23 @@
     y: 0,
     vx: 0,
     vy: 0,
+    ax: 0,
+    ay: 0,
     throwVx: 0,
     throwVy: 0,
     angle: 0,
+    omega: 0,
+    alpha: 0,
     dragging: false,
     pointerId: null,
     lastPX: 0,
     lastPY: 0,
     lastT: 0,
+    dragTarget: null,
     grabOffsetX: 0,
-    grabOffsetY: 0
+    grabOffsetY: 0,
+    holdX: 0,
+    holdY: 0
   };
 
   const headAnchor = { x: 200, y: 304 };
@@ -662,9 +769,14 @@
   const HEAD_REST_Y = 52;
   const SPRING_TOP_OFFSET = 3;
 
-  // Feel tuning.
-  const KX = 3520;     // horizontal spring stiffness
-  const KY = 4560;     // vertical spring stiffness
+  // Physical parameters.
+  // state.v* and flag.v* are WORLD-SPACE velocities.
+  // The flag displacement flag.{x,y} is relative to its rest point on the head.
+  const HEAD_MASS = 1.0;
+  const FLAG_MASS = 1.0;
+
+  const KX = 3520;     // head <-> body spring stiffness
+  const KY = 4560;
   const DAMP_X = 1.8;
   const DAMP_Y = 2.16;
   const MAX_X = 35;
@@ -672,7 +784,59 @@
   const MIN_SPRING_LENGTH = 6;
   const MAX_Y = bodyAnchor.y - (headAnchor.y + HEAD_REST_Y + SPRING_TOP_OFFSET + MIN_SPRING_LENGTH);
 
+  // Each flag spring uses exactly the same force with opposite signs on the
+  // flag and the head. This makes the coupling passive instead of an
+  // acceleration/velocity feedback loop that can create energy.
+  const FLAG_KX = 1960;
+  const FLAG_KY = 2380;
+  const FLAG_DAMP_X = 1.72;
+  const FLAG_DAMP_Y = 2.05;
+  const FLAG_MAX_X = 34;
+  const FLAG_MIN_Y = -52;
+  const FLAG_MAX_Y = 30;
+
+  // Fixed-step integration prevents variable requestAnimationFrame dt from
+  // numerically pumping a stiff spring.
+  const PHYSICS_DT = 1 / 240;
+  const MAX_FRAME_DT = 0.05;
+
+  const flags = {
+    left: {
+      ...flagEls.left,
+      x: 0,
+      y: 0,
+      vx: 0,
+      vy: 0,
+      throwVx: 0,
+      throwVy: 0,
+      angle: -16,
+      dragging: false,
+      anchorX: 152,
+      anchorY: 126,
+      restX: 131,
+      restY: 64,
+      baseAngle: -16
+    },
+    right: {
+      ...flagEls.right,
+      x: 0,
+      y: 0,
+      vx: 0,
+      vy: 0,
+      throwVx: 0,
+      throwVy: 0,
+      angle: 16,
+      dragging: false,
+      anchorX: 248,
+      anchorY: 126,
+      restX: 269,
+      restY: 64,
+      baseAngle: 16
+    }
+  };
+
   let lastFrame = performance.now();
+  let physicsAccumulator = 0;
 
   function clamp(v, a, b) {
     return Math.max(a, Math.min(b, v));
@@ -694,6 +858,39 @@
 
     swatches.querySelectorAll('.swatch').forEach((button) => {
       const isSelected = button.dataset.theme === currentTheme;
+      button.classList.toggle('is-selected', isSelected);
+      button.setAttribute('aria-pressed', String(isSelected));
+    });
+  }
+
+  function resetFlagMotion(flag) {
+    flag.x = 0;
+    flag.y = 0;
+    flag.vx = 0;
+    flag.vy = 0;
+    flag.throwVx = 0;
+    flag.throwVy = 0;
+    flag.angle = flag.baseAngle;
+    flag.dragging = false;
+    flag.hit.classList.remove('dragging');
+  }
+
+  function setFlag(name) {
+    currentFlag = name === 'denmark' ? 'denmark' : 'none';
+    svg.classList.toggle('has-flag', currentFlag === 'denmark');
+    localStorage.setItem(FLAG_STORAGE_KEY, currentFlag);
+
+    if (currentFlag === 'none') {
+      Object.values(flags).forEach(resetFlagMotion);
+
+      if (state.dragTarget && state.dragTarget !== 'head') {
+        state.dragTarget = null;
+        state.pointerId = null;
+      }
+    }
+
+    flagOptions.querySelectorAll('.swatch').forEach((button) => {
+      const isSelected = button.dataset.flag === currentFlag;
       button.classList.toggle('is-selected', isSelected);
       button.setAttribute('aria-pressed', String(isSelected));
     });
@@ -760,6 +957,29 @@
     swatches.appendChild(fragment);
   }
 
+  function buildFlagOptions() {
+    const fragment = document.createDocumentFragment();
+
+    Object.keys(flagChoices).forEach((name) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'swatch';
+      button.dataset.flag = name;
+      button.setAttribute('role', 'listitem');
+      button.setAttribute('aria-label', name === 'none' ? '旗なしに変更' : 'デンマーク旗を追加');
+
+      button.innerHTML = `<span class="swatchColor flagSwatch--${name}"></span>`;
+
+      button.addEventListener('click', () => {
+        setFlag(name);
+      });
+
+      fragment.appendChild(button);
+    });
+
+    flagOptions.appendChild(fragment);
+  }
+
   function screenToSvg(clientX, clientY) {
     const pt = svg.createSVGPoint();
     pt.x = clientX;
@@ -785,7 +1005,106 @@
     }
   }
 
-  function springPath(topX, topY, bottomX, bottomY) {
+  function constrainFlagMotion(flag) {
+    flag.x = clamp(flag.x, -FLAG_MAX_X, FLAG_MAX_X);
+    flag.y = clamp(flag.y, FLAG_MIN_Y, FLAG_MAX_Y);
+
+    // flag.v* is a world-space velocity, while flag.{x,y} is relative to the
+    // head. At a relative-position stop, kill only the velocity *through* the
+    // stop. A free flag may still move together with the head.
+    const relVx = flag.vx - state.vx;
+    const relVy = flag.vy - state.vy;
+
+    if ((flag.x <= -FLAG_MAX_X && relVx < 0) || (flag.x >= FLAG_MAX_X && relVx > 0)) {
+      flag.vx = flag.dragging ? 0 : state.vx;
+    }
+    if ((flag.y <= FLAG_MIN_Y && relVy < 0) || (flag.y >= FLAG_MAX_Y && relVy > 0)) {
+      flag.vy = flag.dragging ? 0 : state.vy;
+    }
+  }
+
+  function isAnyDragging() {
+    return state.dragTarget !== null;
+  }
+
+  function flagsEnabled() {
+    return currentFlag === 'denmark';
+  }
+
+  function isFlagDragging() {
+    return state.dragTarget === 'left' || state.dragTarget === 'right';
+  }
+
+  function softFlagOffset(nx, ny) {
+    const yCenter = (FLAG_MIN_Y + FLAG_MAX_Y) / 2;
+    const yHalf = (FLAG_MAX_Y - FLAG_MIN_Y) / 2;
+    return {
+      x: Math.tanh(nx / FLAG_MAX_X) * FLAG_MAX_X,
+      y: yCenter + Math.tanh((ny - yCenter) / yHalf) * yHalf
+    };
+  }
+
+  function flagWorldRest(flag) {
+    return {
+      x: flag.restX + state.x,
+      y: flag.restY + state.y + HEAD_REST_Y
+    };
+  }
+
+  function applyHeldFlag() {
+    if (!isFlagDragging()) return;
+
+    const flag = flags[state.dragTarget];
+    const rest = flagWorldRest(flag);
+    const held = softFlagOffset(state.holdX - rest.x, state.holdY - rest.y);
+    flag.x = held.x;
+    flag.y = held.y;
+    flag.vx = 0;
+    flag.vy = 0;
+    constrainFlagMotion(flag);
+  }
+
+  function isQuiet(entity, posEps, velEps) {
+    return Math.abs(entity.x) < posEps &&
+      Math.abs(entity.y) < posEps &&
+      Math.abs(entity.vx) < velEps &&
+      Math.abs(entity.vy) < velEps;
+  }
+
+  function restIfSettled() {
+    if (state.dragging || isFlagDragging()) return;
+
+    const flagsAreQuiet = !flagsEnabled() || Object.values(flags).every((flag) => isQuiet(flag, 0.08, 0.9));
+    if (!isQuiet(state, 0.12, 1.1) || !flagsAreQuiet) return;
+
+    state.x = state.y = state.vx = state.vy = state.ax = state.ay = 0;
+    if (flagsEnabled()) {
+      Object.values(flags).forEach((flag) => {
+        flag.x = flag.y = flag.vx = flag.vy = 0;
+      });
+    }
+  }
+
+  function updateHeadPose(dt) {
+    const displayVx = state.vx;
+    let target = (-state.x * 0.055) + (displayVx * 0.016);
+
+    if (flagsEnabled()) {
+      target += (flags.left.x - flags.right.x) * 0.075;
+      target += (-flags.left.y + flags.right.y) * 0.05;
+      target += (flags.left.vx - flags.right.vx) * 0.004;
+    }
+
+    target = clamp(target, -14, 14);
+    const next = clamp(state.angle + (target - state.angle) * 0.18, -14, 14);
+    const safeDt = Math.max(dt, 0.001);
+    const omega = (next - state.angle) / safeDt;
+    state.alpha = (omega - state.omega) / safeDt;
+    state.omega = omega;
+    state.angle = next;
+  }
+
+  function springPath(topX, topY, bottomX, bottomY, kink = 0) {
     // Hand-built spring curve made from cubic Bézier half-turns.
     const coils = 3;
     const amp = 44.2;
@@ -798,10 +1117,11 @@
       const t1 = (i + 1) / (coils * 2);
       const y0 = topY + total * t0;
       const y1 = topY + total * t1;
+      const bow = Math.sin(Math.PI * t0) * kink;
 
       // Gradually shift the spring center from the head to the body.
-      const cx0 = topX + (bottomX - topX) * t0;
-      const cx1 = topX + (bottomX - topX) * t1;
+      const cx0 = topX + (bottomX - topX) * t0 + bow;
+      const cx1 = topX + (bottomX - topX) * t1 + Math.sin(Math.PI * t1) * kink;
       const side = (i % 2 === 0) ? 1 : -1;
 
       const x1 = cx1 + side * amp;
@@ -815,20 +1135,54 @@
     return d;
   }
 
-  function render() {
-    // Small tilt makes it feel more toy-like.
-    const displayVx = state.dragging ? state.throwVx : state.vx;
-    state.angle += (((-state.x * 0.055) + (displayVx * 0.016)) - state.angle) * 0.18;
-    state.angle = clamp(state.angle, -11, 11);
+  function miniSpringPath(ax, ay, bx, by) {
+    const dx = bx - ax;
+    const dy = by - ay;
+    const len = Math.hypot(dx, dy) || 1;
+    const ux = dx / len;
+    const uy = dy / len;
+    const px = -uy;
+    const py = ux;
+    const headPad = 5.5;
+    const tailPad = 2.2;
+    const sx = ax + ux * headPad;
+    const sy = ay + uy * headPad;
+    const ex = bx - ux * tailPad;
+    const ey = by - uy * tailPad;
+    const coils = 12;
+    const amp = 3.8;
 
+    let d = `M ${ax} ${ay} L ${sx} ${sy}`;
+    for (let i = 1; i < coils; i++) {
+      const t = i / coils;
+      const x = sx + (ex - sx) * t;
+      const y = sy + (ey - sy) * t;
+      const side = i % 2 === 0 ? -1 : 1;
+      d += ` L ${x + px * amp * side} ${y + py * amp * side}`;
+    }
+    d += ` L ${ex} ${ey} L ${bx} ${by}`;
+    return d;
+  }
+
+  function render() {
     headGroup.setAttribute(
       'transform',
       `translate(${state.x} ${state.y + HEAD_REST_Y}) rotate(${state.angle} 200 ${255 + HEAD_REST_Y})`
     );
 
-    const topX = headAnchor.x + state.x;
-    const topY = headAnchor.y + state.y + HEAD_REST_Y;
-    const path = springPath(topX, topY + SPRING_TOP_OFFSET, bodyAnchor.x, bodyAnchor.y);
+    let topX = headAnchor.x + state.x;
+    let topY = headAnchor.y + state.y + HEAD_REST_Y;
+    let kink = state.angle * 1.15;
+
+    if (flagsEnabled()) {
+      topX += (flags.left.x + flags.right.x) * 0.2 + state.angle * 0.9;
+      topY += (flags.left.y + flags.right.y) * 0.1;
+      kink += (flags.left.x - flags.right.x) * 0.55;
+      kink += (flags.left.y - flags.right.y) * 0.35;
+      kink += state.omega * 0.012;
+    }
+
+    const path = springPath(topX, topY + SPRING_TOP_OFFSET, bodyAnchor.x, bodyAnchor.y, kink);
     spring.setAttribute('d', path);
     springBack.setAttribute('d', path);
 
@@ -836,34 +1190,116 @@
     const scale = clamp(1 - distance / 620, .76, 1);
     shadow.setAttribute('rx', 90 * scale);
     shadow.setAttribute('opacity', clamp(.13 - Math.max(-state.y, 0) / 1300, .055, .14));
+
+    if (flagsEnabled()) {
+      Object.values(flags).forEach((flag) => {
+        const pivotX = flag.restX + flag.x;
+        const pivotY = flag.restY + flag.y;
+        const displayVx = flag.vx;
+        const targetAngle = flag.baseAngle + clamp(flag.x * .42 + displayVx * .012 - state.omega * 0.08, -18, 18);
+        flag.angle += (targetAngle - flag.angle) * .22;
+        flag.angle = clamp(flag.angle, flag.baseAngle - 24, flag.baseAngle + 24);
+
+        flag.translate.setAttribute('transform', `translate(${pivotX} ${pivotY})`);
+        flag.group.setAttribute('transform', `rotate(${flag.angle}) scale(1.2)`);
+
+        const d = miniSpringPath(flag.anchorX, flag.anchorY, pivotX, pivotY);
+        flag.spring.setAttribute('d', d);
+        flag.springBack.setAttribute('d', d);
+      });
+    }
   }
 
-  function physics(now) {
-    let dt = Math.min((now - lastFrame) / 1000, 0.032);
-    lastFrame = now;
+  function integrateSystem(dt) {
+    // Force on the head from the body spring.
+    let headFx = -KX * state.x - DAMP_X * state.vx;
+    let headFy = -KY * state.y - DAMP_Y * state.vy;
+
+    const freeFlagAccelerations = [];
+
+    if (flagsEnabled()) {
+      Object.values(flags).forEach((flag) => {
+        // The mini spring is between a moving head endpoint and the flag.
+        // q = flag.{x,y} is its extension from the rest configuration.
+        // Relative endpoint velocity must therefore be v_flag - v_head.
+        const relVx = flag.vx - state.vx;
+        const relVy = flag.vy - state.vy;
+
+        const fxOnFlag = -FLAG_KX * flag.x - FLAG_DAMP_X * relVx;
+        const fyOnFlag = -FLAG_KY * flag.y - FLAG_DAMP_Y * relVy;
+
+        // Newton's third law: the head receives the exact opposite force.
+        headFx -= fxOnFlag;
+        headFy -= fyOnFlag;
+
+        freeFlagAccelerations.push({
+          flag,
+          ax: flag.dragging ? 0 : fxOnFlag / FLAG_MASS,
+          ay: flag.dragging ? 0 : fyOnFlag / FLAG_MASS
+        });
+      });
+    }
+
+    if (state.dragging) {
+      // A grabbed head is a kinematic constraint. It has no physical velocity
+      // or acceleration; pointer velocity is kept only in throwV*.
+      state.vx = 0;
+      state.vy = 0;
+      state.ax = 0;
+      state.ay = 0;
+    } else {
+      state.ax = headFx / HEAD_MASS;
+      state.ay = headFy / HEAD_MASS;
+      state.vx += state.ax * dt;
+      state.vy += state.ay * dt;
+    }
+
+    freeFlagAccelerations.forEach(({ flag, ax, ay }) => {
+      if (flag.dragging) {
+        // The grabbed flag endpoint is fixed in world space.
+        flag.vx = 0;
+        flag.vy = 0;
+      } else {
+        flag.vx += ax * dt;
+        flag.vy += ay * dt;
+      }
+    });
 
     if (!state.dragging) {
-      // Semi-implicit Euler, stable enough for this damped spring.
-      const ax = -KX * state.x - DAMP_X * state.vx;
-      const ay = -KY * state.y - DAMP_Y * state.vy;
-
-      state.vx += ax * dt;
-      state.vy += ay * dt;
       state.x += state.vx * dt;
       state.y += state.vy * dt;
       constrainMotion();
-
-      // Snap to rest once the remaining motion is visually imperceptible.
-      if (
-        Math.abs(state.x) < 0.12 &&
-        Math.abs(state.y) < 0.12 &&
-        Math.abs(state.vx) < 1.1 &&
-        Math.abs(state.vy) < 1.1
-      ) {
-        state.x = state.y = state.vx = state.vy = 0;
-      }
     }
 
+    if (flagsEnabled()) {
+      freeFlagAccelerations.forEach(({ flag }) => {
+        if (flag.dragging) return;
+
+        // flag.{x,y} is relative to the head, so qdot = v_flag - v_head.
+        flag.x += (flag.vx - state.vx) * dt;
+        flag.y += (flag.vy - state.vy) * dt;
+        constrainFlagMotion(flag);
+      });
+
+      // If a flag is held while the head moved during this substep, update its
+      // relative coordinate so the held flag endpoint stays fixed in world space.
+      applyHeldFlag();
+    }
+  }
+
+  function physics(now) {
+    const frameDt = Math.min(Math.max((now - lastFrame) / 1000, 0), MAX_FRAME_DT);
+    lastFrame = now;
+    physicsAccumulator += frameDt;
+
+    while (physicsAccumulator >= PHYSICS_DT) {
+      applyHeldFlag();
+      integrateSystem(PHYSICS_DT);
+      physicsAccumulator -= PHYSICS_DT;
+    }
+
+    updateHeadPose(frameDt);
+    restIfSettled();
     render();
     requestAnimationFrame(physics);
   }
@@ -873,6 +1309,7 @@
     const p = screenToSvg(e.clientX, e.clientY);
 
     state.dragging = true;
+    state.dragTarget = 'head';
     state.pointerId = e.pointerId;
     state.grabOffsetX = p.x - (200 + state.x);
     state.grabOffsetY = p.y - (220 + state.y + HEAD_REST_Y);
@@ -881,68 +1318,161 @@
     state.lastT = performance.now();
     state.vx = 0;
     state.vy = 0;
+    state.ax = 0;
+    state.ay = 0;
     state.throwVx = 0;
     state.throwVy = 0;
+    state._prevThrowVx = 0;
+    state._prevThrowVy = 0;
 
     headHit.classList.add('dragging');
     headHit.setPointerCapture(e.pointerId);
   }
 
+  function beginFlagDrag(side, e) {
+    if (!flagsEnabled()) return;
+
+    e.preventDefault();
+    const p = screenToSvg(e.clientX, e.clientY);
+    const flag = flags[side];
+    const rest = flagWorldRest(flag);
+    const worldX = rest.x + flag.x;
+    const worldY = rest.y + flag.y;
+
+    state.dragging = false;
+    state.dragTarget = side;
+    state.pointerId = e.pointerId;
+    state.grabOffsetX = p.x - worldX;
+    state.grabOffsetY = p.y - worldY;
+    state.holdX = worldX;
+    state.holdY = worldY;
+    state.lastPX = worldX;
+    state.lastPY = worldY;
+    state.lastT = performance.now();
+
+    flag.dragging = true;
+    flag.vx = flag.vy = flag.throwVx = flag.throwVy = 0;
+    flag.hit.classList.add('dragging');
+    flag.hit.setPointerCapture(e.pointerId);
+  }
+
   function moveDrag(e) {
-    if (!state.dragging || e.pointerId !== state.pointerId) return;
+    if (!state.dragTarget || e.pointerId !== state.pointerId) return;
     e.preventDefault();
 
-    const p = screenToSvg(e.clientX, e.clientY);
     const now = performance.now();
     const dt = Math.max((now - state.lastT) / 1000, 0.008);
 
-    let nx = p.x - state.grabOffsetX - 200;
-    let ny = p.y - state.grabOffsetY - 220 - HEAD_REST_Y;
+    if (state.dragTarget === 'head') {
+      const p = screenToSvg(e.clientX, e.clientY);
+      let nx = p.x - state.grabOffsetX - 200;
+      let ny = p.y - state.grabOffsetY - 220 - HEAD_REST_Y;
 
-    // Soft resistance near the limits instead of a hard wall.
-    nx = Math.tanh(nx / MAX_X) * MAX_X;
-    const yCenter = (MIN_Y + MAX_Y) / 2;
-    const yHalf = (MAX_Y - MIN_Y) / 2;
-    ny = yCenter + Math.tanh((ny - yCenter) / yHalf) * yHalf;
+      // Soft resistance near the limits instead of a hard wall.
+      nx = Math.tanh(nx / MAX_X) * MAX_X;
+      const yCenter = (MIN_Y + MAX_Y) / 2;
+      const yHalf = (MAX_Y - MIN_Y) / 2;
+      ny = yCenter + Math.tanh((ny - yCenter) / yHalf) * yHalf;
 
-    const instVx = (nx - state.x) / dt;
-    const instVy = (ny - state.y) / dt;
+      const instVx = (nx - state.x) / dt;
+      const instVy = (ny - state.y) / dt;
 
-    state.throwVx = state.throwVx * .62 + instVx * .38;
-    state.throwVy = state.throwVy * .62 + instVy * .38;
-    state.vx = 0;
-    state.vy = 0;
-    state.x = nx;
-    state.y = ny;
-    constrainMotion();
+      state.throwVx = state.throwVx * .62 + instVx * .38;
+      state.throwVy = state.throwVy * .62 + instVy * .38;
 
-    state.lastPX = p.x;
-    state.lastPY = p.y;
+      const oldX = state.x;
+      const oldY = state.y;
+      state.vx = 0;
+      state.vy = 0;
+      state.ax = 0;
+      state.ay = 0;
+      state.x = nx;
+      state.y = ny;
+      constrainMotion();
+
+      // Moving a grabbed head is a kinematic position change, not a hidden
+      // velocity impulse. Preserve each free flag's world position at the
+      // instant of the pointer move; the springs then respond normally.
+      if (flagsEnabled()) {
+        const dx = state.x - oldX;
+        const dy = state.y - oldY;
+        Object.values(flags).forEach((flag) => {
+          if (flag.dragging) return;
+          flag.x -= dx;
+          flag.y -= dy;
+          constrainFlagMotion(flag);
+        });
+      }
+
+      state.lastPX = p.x;
+      state.lastPY = p.y;
+      state.lastT = now;
+      return;
+    }
+
+    const flag = flags[state.dragTarget];
+    if (!flag) return;
+
+    const p = screenToSvg(e.clientX, e.clientY);
+    const holdX = p.x - state.grabOffsetX;
+    const holdY = p.y - state.grabOffsetY;
+    const instVx = (holdX - state.holdX) / dt;
+    const instVy = (holdY - state.holdY) / dt;
+
+    flag.throwVx = flag.throwVx * .62 + instVx * .38;
+    flag.throwVy = flag.throwVy * .62 + instVy * .38;
+    state.holdX = holdX;
+    state.holdY = holdY;
+    applyHeldFlag();
+
+    state.lastPX = holdX;
+    state.lastPY = holdY;
     state.lastT = now;
   }
 
   function endDrag(e) {
-    if (!state.dragging || e.pointerId !== state.pointerId) return;
+    if (!state.dragTarget || e.pointerId !== state.pointerId) return;
     e.preventDefault();
 
+    if (state.dragTarget === 'head') {
+      state.dragging = false;
+      state.pointerId = null;
+      state.dragTarget = null;
+      headHit.classList.remove('dragging');
+
+      // Clamp throw speed to avoid numerical explosions from fast touch events.
+      state.vx = clamp(state.throwVx, -950, 950);
+      state.vy = clamp(state.throwVy, -1100, 1100);
+      state.throwVx = 0;
+      state.throwVy = 0;
+      state._prevThrowVx = 0;
+      state._prevThrowVy = 0;
+      return;
+    }
+
+    const flag = flags[state.dragTarget];
+    if (!flag) return;
+
+    flag.dragging = false;
+    flag.hit.classList.remove('dragging');
+
+    // throwV* is the pointer/flag WORLD velocity. Do not subtract the head
+    // velocity here; the spring damper uses (v_flag - v_head) itself.
+    flag.vx = clamp(flag.throwVx, -620, 620);
+    flag.vy = clamp(flag.throwVy, -720, 720);
+    flag.throwVx = 0;
+    flag.throwVy = 0;
+
+    // No manual kick is applied to the head. Any motion transfer now comes
+    // only through the equal-and-opposite spring force in integrateSystem().
     state.dragging = false;
     state.pointerId = null;
-    headHit.classList.remove('dragging');
-
-    // Clamp throw speed to avoid numerical explosions from fast touch events.
-    state.vx = clamp(state.throwVx, -950, 950);
-    state.vy = clamp(state.throwVy, -1100, 1100);
-    state.throwVx = 0;
-    state.throwVy = 0;
-
-    // A tiny tap should still produce a satisfying bobble.
-    if (Math.hypot(state.x, state.y) < 7 && Math.hypot(state.vx, state.vy) < 70) {
-      state.vy = -260;
-      state.vx = (Math.random() - .5) * 85;
-    }
+    state.dragTarget = null;
   }
 
   headHit.addEventListener('pointerdown', beginDrag);
+  flagEls.left.hit.addEventListener('pointerdown', (e) => beginFlagDrag('left', e));
+  flagEls.right.hit.addEventListener('pointerdown', (e) => beginFlagDrag('right', e));
   svg.addEventListener('pointermove', moveDrag);
   svg.addEventListener('pointerup', endDrag);
   svg.addEventListener('pointercancel', endDrag);
@@ -971,11 +1501,13 @@
 
   // Prevent page gestures while manipulating the toy.
   document.addEventListener('touchmove', (e) => {
-    if (state.dragging) e.preventDefault();
+    if (isAnyDragging()) e.preventDefault();
   }, { passive: false });
 
   buildSwatches();
+  buildFlagOptions();
   setTheme(localStorage.getItem(STORAGE_KEY) || 'mizuiro');
+  setFlag(localStorage.getItem(FLAG_STORAGE_KEY) || 'none');
   render();
   requestAnimationFrame(physics);
 })();
