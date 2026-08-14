@@ -175,6 +175,61 @@
         inset 0 -10px 20px rgba(0,0,0,.08);
     }
 
+    /* 10個目の「木目」を最終行の中央に置く */
+    .swatch:last-child:nth-child(3n + 1) {
+      grid-column: 2;
+    }
+
+    /*
+     * Wood material
+     *
+     * 通常カラーでは plastic / plasticSoft をそのまま使用し、
+     * 木目テーマのときだけ SVG 内の塗りを woodGrain に差し替える。
+     */
+    #toySvg.is-wood [fill="url(#plastic)"] {
+      fill: url(#woodGrain);
+    }
+
+    #toySvg.is-wood [fill="url(#plasticSoft)"] {
+      fill: url(#woodGrainSoft);
+    }
+
+    #toySvg.is-wood [fill="var(--toy-hi)"] {
+      fill: url(#woodGrainSoft);
+    }
+
+    /* プラスチック特有の強いハイライトを木製時は控えめに */
+    #toySvg.is-wood #headVisual > path[fill="none"] {
+      stroke-opacity: .04;
+    }
+
+    #toySvg.is-wood #headVisual circle[fill="white"] {
+      opacity: .08;
+    }
+
+    #toySvg.is-wood #base > ellipse[fill="white"] {
+      fill: #f3e2c4;
+      opacity: .14;
+    }
+
+    .woodForm {
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .24s ease;
+    }
+
+    #toySvg.is-wood .woodForm {
+      opacity: 1;
+    }
+
+    .woodFormShade {
+      mix-blend-mode: multiply;
+    }
+
+    .woodFormHi {
+      mix-blend-mode: screen;
+    }
+
     .stage {
       position: absolute;
       inset: 0;
@@ -240,6 +295,197 @@
           <stop offset="1" stop-color="var(--toy)"/>
         </linearGradient>
 
+        <!--
+          Wood texture.
+          添付写真のオーク材っぽい、明るい縦木目をイメージ。
+          patternUnits="userSpaceOnUse" にすることで、
+          パーツごとに木目サイズが変わりすぎないようにする。
+        -->
+        <linearGradient id="woodBase" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stop-color="#c89e70"/>
+          <stop offset=".18" stop-color="#dfbd91"/>
+          <stop offset=".43" stop-color="#d0a778"/>
+          <stop offset=".67" stop-color="#e3c397"/>
+          <stop offset="1" stop-color="#bd8e60"/>
+        </linearGradient>
+
+        <linearGradient id="woodBaseSoft" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stop-color="#d6af80"/>
+          <stop offset=".25" stop-color="#efd0a4"/>
+          <stop offset=".55" stop-color="#ddb88a"/>
+          <stop offset=".8" stop-color="#eccb9d"/>
+          <stop offset="1" stop-color="#c99d6e"/>
+        </linearGradient>
+
+        <pattern id="woodGrain"
+                 width="36"
+                 height="120"
+                 patternUnits="userSpaceOnUse">
+          <rect width="36" height="120" fill="url(#woodBase)"/>
+
+          <!-- dark grain -->
+          <path
+            d="M4 -12
+               C1 11 8 24 5 46
+               C2 67 8 85 4 108
+               C2 121 3 130 5 138
+
+               M13 -10
+               C17 12 10 29 14 50
+               C18 71 11 88 15 110
+               C17 121 16 130 14 138
+
+               M27 -12
+               C23 9 30 27 26 47
+               C22 68 30 87 26 109
+               C24 122 25 131 27 138"
+            fill="none"
+            stroke="#805c3d"
+            stroke-width="1.15"
+            stroke-opacity=".26"
+            stroke-linecap="round"/>
+
+          <!-- thin grain -->
+          <path
+            d="M8 -5
+               C11 15 6 34 9 54
+               C12 75 7 94 10 125
+
+               M20 -8
+               C17 15 23 32 20 56
+               C17 79 23 98 20 128
+
+               M32 -5
+               C35 17 30 39 33 61
+               C35 83 31 101 34 126"
+            fill="none"
+            stroke="#fff1d6"
+            stroke-width=".8"
+            stroke-opacity=".25"
+            stroke-linecap="round"/>
+
+          <!-- small irregular grain -->
+          <path
+            d="M1 30 C8 26 8 37 1 41
+               M22 74 C29 68 31 80 23 85
+               M8 95 C14 91 15 101 9 105"
+            fill="none"
+            stroke="#755236"
+            stroke-width=".85"
+            stroke-opacity=".18"
+            stroke-linecap="round"/>
+        </pattern>
+
+        <pattern id="woodGrainSoft"
+                 width="36"
+                 height="120"
+                 patternUnits="userSpaceOnUse">
+          <rect width="36" height="120" fill="url(#woodBaseSoft)"/>
+
+          <path
+            d="M4 -12
+               C1 11 8 24 5 46
+               C2 67 8 85 4 108
+               C2 121 3 130 5 138
+
+               M14 -10
+               C18 12 11 29 15 50
+               C19 71 12 88 16 110
+               C18 121 17 130 15 138
+
+               M28 -12
+               C24 9 31 27 27 47
+               C23 68 31 87 27 109
+               C25 122 26 131 28 138"
+            fill="none"
+            stroke="#916947"
+            stroke-width="1"
+            stroke-opacity=".2"
+            stroke-linecap="round"/>
+
+          <path
+            d="M9 -5
+               C12 15 7 34 10 54
+               C13 75 8 94 11 125
+
+               M21 -8
+               C18 15 24 32 21 56
+               C18 79 24 98 21 128"
+            fill="none"
+            stroke="#fff3dc"
+            stroke-width=".8"
+            stroke-opacity=".28"
+            stroke-linecap="round"/>
+        </pattern>
+
+        <!--
+          木目は平面パターンなので、球体らしい丸みは照明オーバーレイで足す。
+          multiply で縁を落とし、screen で左上にハイライトを置く。
+        -->
+        <radialGradient id="woodDomeShade" gradientUnits="userSpaceOnUse"
+                        cx="168" cy="168" r="168">
+          <stop offset="0" stop-color="#fff8ee"/>
+          <stop offset=".38" stop-color="#f0dcc0"/>
+          <stop offset=".68" stop-color="#c49a72"/>
+          <stop offset="1" stop-color="#5a3b26"/>
+        </radialGradient>
+
+        <radialGradient id="woodDomeHi" gradientUnits="userSpaceOnUse"
+                        cx="154" cy="156" r="92">
+          <stop offset="0" stop-color="#e8d5b4"/>
+          <stop offset=".36" stop-color="#c4a07a"/>
+          <stop offset="1" stop-color="#000"/>
+        </radialGradient>
+
+        <radialGradient id="woodBallShade" gradientUnits="objectBoundingBox"
+                        cx=".34" cy=".28" r=".78">
+          <stop offset="0" stop-color="#ffffff"/>
+          <stop offset=".48" stop-color="#edd8b6"/>
+          <stop offset="1" stop-color="#5c3d28"/>
+        </radialGradient>
+
+        <radialGradient id="woodBallHi" gradientUnits="objectBoundingBox"
+                        cx=".3" cy=".26" r=".46">
+          <stop offset="0" stop-color="#fffaf0"/>
+          <stop offset=".4" stop-color="#e8cda8"/>
+          <stop offset="1" stop-color="#000"/>
+        </radialGradient>
+
+        <linearGradient id="woodRingShade" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#fff6ea"/>
+          <stop offset=".4" stop-color="#e4c8a2"/>
+          <stop offset="1" stop-color="#6a4a32"/>
+        </linearGradient>
+
+        <radialGradient id="woodTopShade" gradientUnits="objectBoundingBox"
+                        cx=".42" cy=".32" r=".78">
+          <stop offset="0" stop-color="#ffffff"/>
+          <stop offset=".55" stop-color="#e6cba8"/>
+          <stop offset="1" stop-color="#7a5538"/>
+        </radialGradient>
+
+        <radialGradient id="woodFootShade" gradientUnits="objectBoundingBox"
+                        cx=".38" cy=".28" r=".8">
+          <stop offset="0" stop-color="#ffffff"/>
+          <stop offset=".5" stop-color="#e8d0b0"/>
+          <stop offset="1" stop-color="#6e4c34"/>
+        </radialGradient>
+
+        <linearGradient id="woodStemShade" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stop-color="#7a5538"/>
+          <stop offset=".35" stop-color="#fff6ea"/>
+          <stop offset="1" stop-color="#5c3d28"/>
+        </linearGradient>
+
+        <clipPath id="domeClip">
+          <path d="M90 258
+                   C90 168 136 104 200 104
+                   C264 104 310 168 310 258
+                   C310 288 288 306 256 306
+                   L144 306
+                   C112 306 90 288 90 258 Z"/>
+        </clipPath>
+
         <filter id="softShadow" x="-50%" y="-100%" width="200%" height="300%">
           <feGaussianBlur stdDeviation="10"/>
         </filter>
@@ -258,13 +504,17 @@
       <g id="base">
         <rect x="143" y="414" width="18" height="30" rx="8" fill="url(#plasticSoft)"/>
         <rect x="239" y="414" width="18" height="30" rx="8" fill="url(#plasticSoft)"/>
+        <rect class="woodForm woodFormShade" x="143" y="414" width="18" height="30" rx="8" fill="url(#woodStemShade)"/>
+        <rect class="woodForm woodFormShade" x="239" y="414" width="18" height="30" rx="8" fill="url(#woodStemShade)"/>
 
         <g>
           <ellipse cx="144" cy="444" rx="35" ry="11" fill="url(#plasticSoft)"/>
+          <ellipse class="woodForm woodFormShade" cx="144" cy="444" rx="35" ry="11" fill="url(#woodFootShade)"/>
         </g>
 
         <g>
           <ellipse cx="256" cy="444" rx="35" ry="11" fill="url(#plasticSoft)"/>
+          <ellipse class="woodForm woodFormShade" cx="256" cy="444" rx="35" ry="11" fill="url(#woodFootShade)"/>
         </g>
 
         <!-- lower ring -->
@@ -276,7 +526,17 @@
                  C156 425 126 416 126 403
                  Z"
               fill="url(#plastic)"/>
+        <path class="woodForm woodFormShade"
+              d="M126 383
+                 C126 370 156 361 200 361
+                 C244 361 274 370 274 383
+                 L274 403
+                 C274 416 244 425 200 425
+                 C156 425 126 416 126 403
+                 Z"
+              fill="url(#woodRingShade)"/>
         <ellipse cx="200" cy="383" rx="74" ry="14" fill="var(--toy-hi)" opacity=".96"/>
+        <ellipse class="woodForm woodFormShade" cx="200" cy="383" rx="74" ry="14" fill="url(#woodTopShade)"/>
         <ellipse cx="200" cy="393" rx="60" ry="10" fill="white" opacity=".34"/>
       </g>
 
@@ -290,6 +550,7 @@
       <g id="headGroup">
         <g id="headVisual">
           <rect x="191" y="86" width="18" height="38" rx="7" fill="url(#plasticSoft)"/>
+          <rect class="woodForm woodFormShade" x="191" y="86" width="18" height="38" rx="7" fill="url(#woodStemShade)"/>
 
           <!-- dome -->
           <path d="M90 258
@@ -299,6 +560,21 @@
                    L144 306
                    C112 306 90 288 90 258 Z"
                 fill="url(#plastic)"/>
+
+          <path class="woodForm woodFormShade"
+                d="M90 258
+                   C90 168 136 104 200 104
+                   C264 104 310 168 310 258
+                   C310 288 288 306 256 306
+                   L144 306
+                   C112 306 90 288 90 258 Z"
+                fill="url(#woodDomeShade)"/>
+
+          <ellipse class="woodForm woodFormHi"
+                   cx="154" cy="156" rx="78" ry="58"
+                   fill="url(#woodDomeHi)"
+                   fill-opacity=".42"
+                   clip-path="url(#domeClip)"/>
 
           <!-- subtle plastic highlight -->
           <path d="M116 197
@@ -312,6 +588,8 @@
 
           <!-- nose -->
           <circle cx="200" cy="250" r="22" fill="url(#plasticSoft)" filter="url(#noseShadow)"/>
+          <circle class="woodForm woodFormShade" cx="200" cy="250" r="22" fill="url(#woodBallShade)"/>
+          <circle class="woodForm woodFormHi" cx="200" cy="250" r="22" fill="url(#woodBallHi)"/>
           <circle cx="192" cy="242" r="6" fill="white" opacity=".2"/>
         </g>
 
@@ -346,7 +624,16 @@
     yellowgreen: { label: '黄緑', toy: '#b6d61b', hi: '#e8f586', shadow: '#879f09' },
     beige: { label: 'ベージュ', toy: '#efc9b1', hi: '#ffe8db', shadow: '#d5a58a' },
     red: { label: '赤', toy: '#ef4740', hi: '#ffaaa3', shadow: '#c92825' },
-    usuao: { label: '薄い青色', toy: '#b8d8ff', hi: '#edf5ff', shadow: '#89add9' }
+    usuao: { label: '薄い青色', toy: '#b8d8ff', hi: '#edf5ff', shadow: '#89add9' },
+
+    wood: {
+      label: '木目',
+      toy: '#d2aa7a',
+      hi: '#efd0a4',
+      shadow: '#9c704b',
+      spring: '#29231e',
+      material: 'wood'
+    }
   };
   const themeEntries = Object.entries(themes);
   const STORAGE_KEY = 'hoptimist-theme';
@@ -398,6 +685,9 @@
     root.style.setProperty('--toy', theme.toy);
     root.style.setProperty('--toy-hi', theme.hi);
     root.style.setProperty('--toy-shadow', theme.shadow);
+    root.style.setProperty('--spring', theme.spring || theme.toy);
+
+    svg.classList.toggle('is-wood', theme.material === 'wood');
 
     if (themeMeta) themeMeta.setAttribute('content', getComputedStyle(root).getPropertyValue('--bg').trim());
     localStorage.setItem(STORAGE_KEY, currentTheme);
@@ -428,8 +718,36 @@
       button.dataset.theme = name;
       button.setAttribute('role', 'listitem');
       button.setAttribute('aria-label', `${theme.label}に変更`);
+
+      const swatchStyle = theme.material === 'wood'
+        ? `
+          background:
+            repeating-linear-gradient(
+              96deg,
+              rgba(112,76,46,.22) 0px,
+              rgba(112,76,46,.22) 1px,
+              transparent 1px,
+              transparent 6px
+            ),
+            linear-gradient(
+              145deg,
+              ${theme.hi},
+              ${theme.toy} 58%,
+              ${theme.shadow}
+            );
+        `
+        : `
+          background:
+            linear-gradient(
+              145deg,
+              ${theme.hi},
+              ${theme.toy} 58%,
+              ${theme.shadow}
+            );
+        `;
+
       button.innerHTML = `
-        <span class="swatchColor" style="background: linear-gradient(145deg, ${theme.hi}, ${theme.toy} 58%, ${theme.shadow});"></span>
+        <span class="swatchColor" style="${swatchStyle}"></span>
       `;
 
       button.addEventListener('click', () => {
